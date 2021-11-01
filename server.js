@@ -9,7 +9,7 @@ const port = process.env.PORT || 8080;
 
 // middlewares
 app.use(express.json());
-app.cors(cors()); // cors is a security middleware and it handles the headers
+app.use(cors()); // cors is a security middleware and it handles the headers
 
 // DB config
 
