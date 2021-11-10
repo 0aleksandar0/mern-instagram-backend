@@ -8,6 +8,14 @@ import dbModal from "./dbModal.js";
 const app = express(); // make the instance
 const port = process.env.PORT || 8080;
 
+const pusher = new Pusher({
+  appId: "1291552",
+  key: "3af9192ba1a6ba62c4e5",
+  secret: "c6b9a3d61119ef00bc04",
+  cluster: "eu",
+  useTLS: true,
+});
+
 // middlewares
 app.use(express.json());
 app.use(cors()); // cors is a security middleware and it handles the headers
@@ -24,6 +32,27 @@ mongoose.connect(connection_url, {
 
 mongoose.connection.once("open", () => {
   console.log("DB Connected");
+
+  const changeStream = mongoose.connection.collection("post").watch();
+
+  changeStream.on("change", (change) => {
+    console.log("ChgStream Triggered on pusher...");
+    console.log(change);
+    console.log("End of Change");
+
+    if (change.operationType === "insert") {
+      console.log("Triggering Pusher ***Img UPLOAD***");
+
+      const postDetails = change.fullDocument;
+      pusher.trigger("post", "inserted", {
+        user: postDetails.user,
+        caption: postDetails.caption,
+        image: postDetails.image,
+      });
+    } else {
+      console.log("Unkown trigger from Pusher");
+    }
+  });
 });
 // api routes / api endpoints
 app.get("/", (req, res) => res.status(200).send("hello world")); //test the basic url
